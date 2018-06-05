@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: factom-wallet
+  labels:
+    app: factom-wallet
+spec:
+  serviceName: "factom-wallet"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: factom-wallet
+  template:
+    metadata:
+      labels:
+        app: factom-wallet
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      containers:
+      - name: factom-wallet
+        image: {{ .Values.image }}
+        command: ["bash", "-c", "factom-walletd -selfaddr 0.0.0.0 -s factom-bridge:8088"]
+        ports:
+        - containerPort: 8089
+          name: factom-wallet
+        volumeMounts:
+        - name: data
+          mountPath: /home/runner/.factom
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100M
+          limits:
+            cpu: 100m
+            memory: 100M
+        livenessProbe:
+          tcpSocket:
+            port: 8089
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          successThreshold: 1
+          failureThreshold: 5
+        readinessProbe:
+          tcpSocket:
+            port: 8089
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          successThreshold: 1
+          failureThreshold: 1
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{ if .Values.storageClass }}
+      storageClassName: "fast"
+      {{ end }}
+      resources:
+        requests:
+          storage: {{ .Values.walletdStorageSize }}

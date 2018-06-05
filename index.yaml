@@ -1,0 +1,12 @@
+apiVersion: v1
+entries:
+  factom-ha:
+  - apiVersion: v1
+    created: 2018-06-05T13:53:52.2002515-04:00
+    description: A Helm chart for Kubernetes
+    digest: c2df41a230a49ef48389122db69e67675730bed09e90530c4e71d908b6c52820
+    name: factom-ha
+    urls:
+    - https://futuretechindustriesllc.github.io/charts/factom-ha-0.1.0.tgz
+    version: 0.1.0
+generated: 2018-06-05T13:53:52.1961101-04:00

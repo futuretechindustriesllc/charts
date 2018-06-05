@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: factom-bridge
+  labels:
+    app: factom-bridge
+spec:
+  serviceName: "factom-bridge"
+  replicas: {{ .Values.factomdReplicaCount }}
+  selector:
+    matchLabels:
+      app: factom-bridge
+  template:
+    metadata:
+      labels:
+        app: factom-bridge
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      initContainers:
+      - name: download-bootstrap
+        image: {{ .Values.image }}
+        command: ["bash", "-c", 'if [ -f "/home/runner/.factom/m2/factomd.conf" ]; then echo "Already initialized, skipping"; exit 0; fi; mkdir -p /home/runner/.factom/m2; touch /home/runner/.factom/m2/factomd.conf' ]
+        volumeMounts:
+        - name: data
+          mountPath: /home/runner/.factom
+      containers:
+      - name: factom-bridge
+        image: {{ .Values.image }}
+        command: ["bash", "-c", "factomd -selfaddr 0.0.0.0"]
+        ports:
+        - containerPort: 8090
+          name: http
+        - containerPort: 8088
+          name: factom
+        volumeMounts:
+        - name: data
+          mountPath: /home/runner/.factom
+        resources:
+          requests:
+            cpu: 300m
+            memory: 8Gi
+          limits:
+            cpu: 300m
+            memory: 8Gi
+        livenessProbe:
+          httpGet:
+            path: '/'
+            port: 8090
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          successThreshold: 1
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: '/'
+            port: 8090
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          successThreshold: 1
+          failureThreshold: 1
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{ if .Values.storageClass }}
+      storageClassName: "fast"
+      {{ end }}
+      resources:
+        requests:
+          storage: {{ .Values.factomdStorageSize }}

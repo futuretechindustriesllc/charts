@@ -1,0 +1,11 @@
+# factomd and walletd image.
+image: "futuretechindustries/factom-ha:0.0.1"
+
+# How many instances of factomd and walletd to run.
+factomdReplicaCount: 3
+
+# Storage class to use for factomd and walletd
+storageClass: null
+
+factomdStorageSize: 25Gi
+walletdStorageSize: 5Gi
