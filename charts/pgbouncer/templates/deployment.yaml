@@ -1,0 +1,88 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.replicasCount }}
+  template:
+    metadata:
+      annotations:
+        checksum/pgbouncer-config-configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/pgbouncer-creds-secret: {{ include (print $.Template.BasePath "/secret-creds.yaml") . | sha256sum }}
+        checksum/pgbouncer-probes-secret: {{ include (print $.Template.BasePath "/secret-probes.yaml") . | sha256sum }}
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ .Release.Name }}
+        image: "{{ .Values.image }}:{{ .Values.imageTag }}"
+        imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        resources:
+          limits:
+            cpu: {{ .Values.cpu }}
+            memory: {{ .Values.memory }}
+          requests:
+            cpu: {{ .Values.cpu }}
+            memory: {{ .Values.memory }}
+        volumeMounts:
+        - name: pgbouncer-config
+          mountPath: /pgbouncer-config
+        - name: pgbouncer-probes
+          mountPath: /pgbouncer-probes
+          readOnly: true
+        env:
+        - name: PG_USER
+          value: {{ .Values.username }}
+        - name: PG_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-creds
+              key: postgresql-password
+        - name: PG_ADDR
+          value: {{ .Values.host }}
+        - name: PG_PORT
+          value: {{ .Values.hostPort | quote }}
+        ports:
+        - name: pgbouncer
+          containerPort: 6432
+        readinessProbe:
+          exec:
+            command:
+            - /do_probe.sh
+          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.probes.readiness.successThreshold }}
+          failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+        {{- if .Values.probes.liveness }}
+        livenessProbe:
+          exec:
+            command:
+            - /do_probe.sh
+          periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+          timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.probes.liveness.successThreshold }}
+          failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+        {{- end }}
+{{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- range $key, $value := .Values.nodeSelector }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+{{- end }}
+      volumes:
+        - name: pgbouncer-config
+          configMap:
+            name: {{ .Release.Name }}-pgbouncer-config
+        - name: pgbouncer-probes
+          secret: 
+            secretName: {{ .Release.Name }}-probes-settings
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000

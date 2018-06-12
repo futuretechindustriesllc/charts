@@ -2,11 +2,30 @@ apiVersion: v1
 entries:
   factom-ha:
   - apiVersion: v1
-    created: 2018-06-05T13:53:52.2002515-04:00
+    created: 2018-06-12T23:15:13.323895855Z
     description: A Helm chart for Kubernetes
-    digest: c2df41a230a49ef48389122db69e67675730bed09e90530c4e71d908b6c52820
+    digest: 49deda37c1ad566717e32de0a3cfd0889176cd796b7e911813251d7ff0e77bc9
     name: factom-ha
     urls:
     - https://futuretechindustriesllc.github.io/charts/factom-ha-0.1.0.tgz
     version: 0.1.0
-generated: 2018-06-05T13:53:52.1961101-04:00
+  pgbouncer:
+  - created: 2018-06-12T23:15:13.324665761Z
+    description: Chart for PGBouncer
+    digest: e432a354ea8317da886feec8b1819b8dc603f46db9bc97d8e371fa1b6c413ac3
+    engine: gotpl
+    home: https://pgbouncer.github.io
+    keywords:
+    - postgresql
+    - database
+    - sql
+    maintainers:
+    - email: ops@futuretech.industries
+      name: FutureTech Industries
+    name: pgbouncer
+    sources:
+    - https://github.com/clearbit/charts
+    urls:
+    - https://futuretechindustriesllc.github.io/charts/pgbouncer-0.2.0.tgz
+    version: 0.2.0
+generated: 2018-06-12T23:15:13.323074815Z

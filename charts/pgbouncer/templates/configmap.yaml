@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-pgbouncer-config
+  labels:
+    app: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  auth_file: '/pgbouncer/users.txt'
+  listen_addr: '*'
+  max_client_conn: {{ .Values.maxClientConnections | quote }}
+  default_pool_size: {{ .Values.poolSize | quote }}
+  server_idle_timeout: {{ .Values.serverIdleTimeout | quote }}
+  server_lifetime: {{ .Values.serverLifetime | quote }}
+  pool_mode: {{ .Values.poolMode | quote }}
+  log_connections: {{ .Values.logConnections | quote }}
+  log_disconnections: {{ .Values.logDisconnections | quote }}
+  stats_period: {{ .Values.statsPeriod | quote }}
+  listen_backlog: {{ .Values.listenBacklog | quote }}
+{{- if .Values.injectConfig -}}
+{{- range $key, $val := .Values.injectConfig }}
+  {{ $key }}: {{ $val | quote }}
+{{- end }}
+{{- end }}

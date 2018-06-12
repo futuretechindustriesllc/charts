@@ -1,0 +1,93 @@
+## Standard settings for the image and pull policy.
+## See https://kubernetes.io/docs/concepts/containers/images/
+image: futuretechindustries/pgbouncer-kube
+imagePullPolicy: IfNotPresent
+imageTag: '0.5'
+
+## The number of PgBouncer pods.
+replicasCount: 2
+
+## These are the PostgreSQL connection credentials.
+username: ""
+password: ""
+host: ""
+hostPort: 5432
+
+## The Kubernetes service type to expose PgBouncer with.  Use ClusterIP for security, LoadBalancer for dev deployments you want to connect to from outside the cluster.
+serviceType: ClusterIP
+
+## Maximum number of client connections allowed
+maxClientConnections: 5000
+
+## How many server connections to allow per user/database pair
+poolSize: 20
+
+## If a server connection has been idle more than this many seconds it will be dropped.
+## If 0 then timeout is disabled.
+serverIdleTimeout: 60
+
+## PgBouncer will try to close and recreate connections that have been around longer than this many seconds.
+serverLifetime: 3600
+
+## Pool mode.
+poolMode: 'transaction'
+
+## Log configuration. Should be integers.
+logConnections: 1
+logDisconnections: 1
+
+## Log stats lines on this interval.
+statsPeriod: 60
+
+## The listen backlog. See man LISTEN(2)
+listenBacklog: 8192
+
+## Inject the following key-value pairs into PgBouncer's configuration file in the pgbouncer section.
+## For the most part use the above settings, but some users have highly specific one-off requirements that this chart doesn't support.
+## This setting assumes you know what you're doing: if you conflict with one of this chart's settings (even those added in the future), there will be duplicate values in pgbouncer.ini.
+injectConfig: {}
+
+## Resource limits
+## These values are set as both the requests and limits on all PgBouncer pods.
+cpu: 150m
+memory: 200Mi
+
+## Node selector
+##
+## e.g. "role: worker-general"
+## It is a good idea to have a node pool that only runs PgBouncers and to use this selector to schedule them there.
+nodeSelector: null
+  ##role: proxies
+
+## Probe (health check) configuration.
+## If username and password aren't configured, they are defaulted as the global username and password.
+## For maximum security, create a read-only user and use it for the probes.
+probes:
+  username: null
+  password: null
+  ## Change this to a database the user has access to.
+  database: 'postgres'
+  ## Query to use for the health check.
+  ## This will be run against the database frequently and should do little to no intensive work.
+  ## The goal is to verify that the connection is good, so the following is usually fine.
+  query: 'select 1'
+  ## Required. Config for the readiness probe. These values match the Kubernetes API.
+  ## You may need to up timeoutSeconds if your application does primarily long-running queries or you're using session pooling.
+  ## The goal of the readiness probe is to direct connections toward PgBouncer instances that can handle the query.
+  readiness:
+    periodSeconds: 20
+    timeoutSeconds: 10
+    initialDelaySeconds: 5
+    successThreshold: 1
+    failureThreshold: 2
+  ## Config for the liveness probe. These values match the Kubernetes API.
+  ## timeoutSeconds may need to be increased if the application does primarily long-running queries or PgBouncer is using session pooling.
+  ## The goal of the liveness probe is to detect PgBouncer instances which may be stuck and restart them.
+  ## This config is optional. If this key is missing or null, there will be no liveness probe.
+  ## When using session pooling, PgBouncer may not be able to respond in time. In that case, either disable this probe or set the timeoutSeconds and failureThreshold higher.
+  liveness:
+    periodSeconds: 20
+    timeoutSeconds: 10
+    initialDelaySeconds: 5
+    successThreshold: 1
+    failureThreshold: 8
