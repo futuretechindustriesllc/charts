@@ -50,6 +50,10 @@ spec:
         ports:
         - name: pgbouncer
           containerPort: 6432
+        lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/bash", "-l", "-c", "echo 'PAUSE;' | psql -p 6432 pgbouncer -h /tmp"]          
         readinessProbe:
           exec:
             command:
